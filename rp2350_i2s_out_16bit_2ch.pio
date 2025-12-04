@@ -4,13 +4,19 @@
 .side_set 2 ; fsync, sclk from highest to lowest
 
 out pins, 1 side 0b00
-set x, 14 side 0b01
+set x, 13 side 0b01
 
 a: out pins, 1 side 0b00
 jmp x-- a side 0b01
 
 out pins, 1 side 0b10
-set x, 14 side 0b11
+nop side 0b11
+
+out pins, 1 side 0b10
+set x, 13 side 0b11
 
 b: out pins, 1 side 0b10
 jmp x-- b side 0b11
+
+out pins, 1 side 0b00
+nop side 0b01
