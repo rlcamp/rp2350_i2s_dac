@@ -1,0 +1,16 @@
+.program i2s_out_16bit_2ch
+.fifo tx
+.out 1 left auto
+.side_set 2 ; fsync, sclk from highest to lowest
+
+out pins, 1 side 0b00
+set x, 14 side 0b01
+
+a: out pins, 1 side 0b00
+jmp x-- a side 0b01
+
+out pins, 1 side 0b10
+set x, 14 side 0b11
+
+b: out pins, 1 side 0b10
+jmp x-- b side 0b11
