@@ -8,6 +8,10 @@
 #include "hardware/dma.h"
 #include "hardware/gpio.h"
 
+/* promise compiler there is no such thing as inf/nan in complex numbers so that
+ multiplying them can be done purely in hardware */
+#pragma GCC optimize "-fcx-limited-range"
+
 #include "rp2350_i2s_out_16bit_2ch.pio.h"
 #define PIO_CLOCK_PER_BIT 2
 #define BIT_PER_SAMPLE 16
