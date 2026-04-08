@@ -69,18 +69,18 @@ int main() {
     const unsigned sm = pio_claim_unused_sm(pio, true);
     const unsigned offset = pio_add_program(pio, &i2s_out_16bit_2ch_program);
 
-    /* gp6 for bck, gp7 for wsel, gp8 for din */
+    /* gp5 for bck, gp6 for wsel, gp7 for din */
+    pio_gpio_init(pio, 5);
     pio_gpio_init(pio, 6);
     pio_gpio_init(pio, 7);
-    pio_gpio_init(pio, 8);
 
-    pio_sm_set_consecutive_pindirs(pio, sm, 6, 3, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, 5, 3, true);
 
     const unsigned long sys_cycle_256ths_per_pio_clock = 4096;
 
     pio_sm_config sm_config = i2s_out_16bit_2ch_program_get_default_config(offset);
-    sm_config_set_sideset_pins(&sm_config, 6);
-    sm_config_set_out_pins(&sm_config, 8, 1);
+    sm_config_set_sideset_pins(&sm_config, 5);
+    sm_config_set_out_pins(&sm_config, 7, 1);
     sm_config_set_clkdiv_int_frac8(&sm_config, sys_cycle_256ths_per_pio_clock / 256U, sys_cycle_256ths_per_pio_clock % 256U);
 
     /* restore original config */
