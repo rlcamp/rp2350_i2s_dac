@@ -22,14 +22,14 @@ void yield(void) {
     __wfe();
 }
 
-#define BUFFER_WRAP_BITS 13
-#define BYTES_PER_CHUNK 4096
-#define CHANNELS 2
+#define DAC_BUFFER_WRAP_BITS 13
+#define DAC_BYTES_PER_CHUNK 4096
+#define DAC_CHANNELS 2
 
-#define SAMPLES_PER_CHUNK (BYTES_PER_CHUNK / (CHANNELS * sizeof(int16_t)))
-__attribute((aligned(sizeof(int16_t) * 2 * SAMPLES_PER_CHUNK * CHANNELS)))
-static int16_t buffer[2][SAMPLES_PER_CHUNK * CHANNELS];
-_Static_assert(1U << BUFFER_WRAP_BITS == sizeof(buffer), "wtf");
+#define DAC_SAMPLES_PER_CHUNK (DAC_BYTES_PER_CHUNK / (DAC_CHANNELS * sizeof(int16_t)))
+__attribute((aligned(sizeof(int16_t) * 2 * DAC_SAMPLES_PER_CHUNK * DAC_CHANNELS)))
+static int16_t buffer[2][DAC_SAMPLES_PER_CHUNK * DAC_CHANNELS];
+_Static_assert(1U << DAC_BUFFER_WRAP_BITS == sizeof(buffer), "wtf");
 
 static float cmagsquaredf(const float complex x) {
     return crealf(x) * crealf(x) + cimagf(x) * cimagf(x);
@@ -92,14 +92,14 @@ int main() {
     channel_config_set_dreq(&cfg, pio_get_dreq(pio, sm, true));
     channel_config_set_read_increment(&cfg, true);
     channel_config_set_write_increment(&cfg, false);
-    channel_config_set_ring(&cfg, false, BUFFER_WRAP_BITS);
+    channel_config_set_ring(&cfg, false, DAC_BUFFER_WRAP_BITS);
     channel_config_set_transfer_data_size(&cfg, DMA_SIZE_32);
 
     dma_channel_configure(IDMA_I2S,
                           &cfg,
                           &pio->txf[sm],
                           &buffer[0],
-                          SAMPLES_PER_CHUNK | (1U << 28),
+                          DAC_SAMPLES_PER_CHUNK | (1U << 28),
                           false);
 
     /* enable interrupt for dma, but leave it disabled in nvic */
@@ -109,7 +109,7 @@ int main() {
     irq_set_enabled(DMA_IRQ_0, false);
     dma_channel_start(IDMA_I2S);
 
-    const float sample_rate = 48e6f * 256.0f / (sys_cycle_256ths_per_pio_clock * PIO_CLOCK_PER_BIT * BIT_PER_SAMPLE * CHANNELS);
+    const float sample_rate = 48e6f * 256.0f / (sys_cycle_256ths_per_pio_clock * PIO_CLOCK_PER_BIT * BIT_PER_SAMPLE * DAC_CHANNELS);
 
     /* this can be any value between dc and fs/2, does not need to be an integer */
     const float tone_frequency = 900.0f;
@@ -124,13 +124,13 @@ int main() {
 
     for (size_t ichunk = 0;; ichunk++) {
         int16_t * const dst = buffer[ichunk % 2];
-        for (size_t ival = 0; ival < SAMPLES_PER_CHUNK; ival++) {
+        for (size_t ival = 0; ival < DAC_SAMPLES_PER_CHUNK; ival++) {
             const float sample = crealf(carrier) * tone_amplitude;
 
-            for (size_t ic = 0; ic < CHANNELS; ic++)
+            for (size_t ic = 0; ic < DAC_CHANNELS; ic++)
             /* map [-1.0, 1.0] to [0, TOP] with triangular pdf dither */
                 /* TODO: validate full scale and no clipping */
-                dst[ic + CHANNELS * ival] = (sample * 32766) + 0.5f + frand_minus_frand();
+                dst[ic + DAC_CHANNELS * ival] = (sample * 32766) + 0.5f + frand_minus_frand();
 
             /* rotate complex sinusoid at the desired frequency */
             carrier *= advance;
