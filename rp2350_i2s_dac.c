@@ -86,16 +86,15 @@ int main() {
     /* restore original config */
     pio_sm_init(pio, sm, offset, &sm_config);
 
-#define IDMA_I2S 0
-    dma_channel_claim(IDMA_I2S);
-    dma_channel_config cfg = dma_channel_get_default_config(IDMA_I2S);
+    const unsigned idma = dma_claim_unused_channel(true);
+    dma_channel_config cfg = dma_channel_get_default_config(idma);
     channel_config_set_dreq(&cfg, pio_get_dreq(pio, sm, true));
     channel_config_set_read_increment(&cfg, true);
     channel_config_set_write_increment(&cfg, false);
     channel_config_set_ring(&cfg, false, DAC_BUFFER_WRAP_BITS);
     channel_config_set_transfer_data_size(&cfg, DMA_SIZE_32);
 
-    dma_channel_configure(IDMA_I2S,
+    dma_channel_configure(idma,
                           &cfg,
                           &pio->txf[sm],
                           &buffer[0],
@@ -103,11 +102,11 @@ int main() {
                           false);
 
     /* enable interrupt for dma, but leave it disabled in nvic */
-    dma_channel_acknowledge_irq0(IDMA_I2S);
-    dma_channel_set_irq0_enabled(IDMA_I2S, true);
+    dma_channel_acknowledge_irq0(idma);
+    dma_channel_set_irq0_enabled(idma, true);
     __dsb();
     irq_set_enabled(DMA_IRQ_0, false);
-    dma_channel_start(IDMA_I2S);
+    dma_channel_start(idma);
 
     const float sample_rate = 48e6f * 256.0f / (sys_cycle_256ths_per_pio_clock * PIO_CLOCK_PER_BIT * BIT_PER_SAMPLE * DAC_CHANNELS);
 
@@ -145,10 +144,10 @@ int main() {
             pio_sm_set_enabled(pio, sm, true);
         else {
             /* run other tasks or low power sleep until next dma interrupt */
-            while (!(dma_hw->intr & 1U << IDMA_I2S)) yield();
+            while (!(dma_hw->intr & 1U << idma)) yield();
 
             /* acknowledge and clear the interrupt in both dma and nvic */
-            dma_hw->ints0 = 1U << IDMA_I2S;
+            dma_hw->ints0 = 1U << idma;
             irq_clear(DMA_IRQ_0);
         }
     }
