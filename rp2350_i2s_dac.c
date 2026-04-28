@@ -65,7 +65,7 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
-    PIO pio = pio0;
+    PIO pio = pio2;
     const unsigned sm = pio_claim_unused_sm(pio, true);
     const unsigned offset = pio_add_program(pio, &i2s_out_16bit_2ch_program);
 
