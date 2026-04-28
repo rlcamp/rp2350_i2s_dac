@@ -102,10 +102,10 @@ int main() {
                           false);
 
     /* enable interrupt for dma, but leave it disabled in nvic */
-    dma_channel_acknowledge_irq0(idma);
-    dma_channel_set_irq0_enabled(idma, true);
+    dma_irqn_acknowledge_channel(3, idma);
+    dma_irqn_set_channel_enabled(3, idma, true);
     __dsb();
-    irq_set_enabled(DMA_IRQ_0, false);
+    irq_set_enabled(DMA_IRQ_3, false);
     dma_channel_start(idma);
 
     const float sample_rate = 48e6f * 256.0f / (sys_cycle_256ths_per_pio_clock * PIO_CLOCK_PER_BIT * BIT_PER_SAMPLE * DAC_CHANNELS);
@@ -147,8 +147,8 @@ int main() {
             while (!(dma_hw->intr & 1U << idma)) yield();
 
             /* acknowledge and clear the interrupt in both dma and nvic */
-            dma_hw->ints0 = 1U << idma;
-            irq_clear(DMA_IRQ_0);
+            dma_hw->ints3 = 1U << idma;
+            irq_clear(DMA_IRQ_3);
         }
     }
 }
