@@ -149,6 +149,29 @@ int main() {
             /* acknowledge and clear the interrupt in both dma and nvic */
             dma_hw->ints3 = 1U << idma;
             irq_clear(DMA_IRQ_3);
+
+            /* we get here whenever a chunk has just finished being sent.
+             if we are not transmitting forever, we would break here when
+             we have finished sending the last chunk, after enqueuing
+             one chunk of zeros */
         }
     }
+
+    /* stop the pio from clocking */
+    pio_sm_set_enabled(pio, sm, false);
+
+    /* deinit and unclaim dma */
+    dma_irqn_set_channel_enabled(3, idma, false);
+    dma_channel_abort(idma);
+    dma_irqn_acknowledge_channel(3, idma);
+    dma_channel_unclaim(idma);
+
+    /* deinit and unclaim pio */
+    pio_sm_clear_fifos(pio, sm);
+    pio_remove_program(pio, &i2s_out_16bit_2ch_program, offset);
+    pio_sm_unclaim(pio, sm);
+
+    gpio_deinit(5);
+    gpio_deinit(6);
+    gpio_deinit(7);
 }
