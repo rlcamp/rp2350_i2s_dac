@@ -91,9 +91,14 @@ int main() {
     channel_config_set_dreq(&cfg, pio_get_dreq(pio, sm, true));
     channel_config_set_read_increment(&cfg, true);
     channel_config_set_write_increment(&cfg, false);
+
+    /* enable ring buffer mode so that reading from memory wraps after two chunks */
     channel_config_set_ring(&cfg, false, DAC_BUFFER_WRAP_BITS);
+
+    /* configure dma to transfer two 16-bit samples at a time */
     channel_config_set_transfer_data_size(&cfg, DMA_SIZE_32);
 
+    /* configure DMA in "trigger self" mode with an interrupt once per chunk */
     dma_channel_configure(idma,
                           &cfg,
                           &pio->txf[sm],
@@ -126,9 +131,8 @@ int main() {
         for (size_t ival = 0; ival < DAC_SAMPLES_PER_CHUNK; ival++) {
             const float sample = crealf(carrier) * tone_amplitude;
 
+            /* dither and quantize each of the stereo channels separately */
             for (size_t ic = 0; ic < DAC_CHANNELS; ic++)
-            /* map [-1.0, 1.0] to [0, TOP] with triangular pdf dither */
-                /* TODO: validate full scale and no clipping */
                 dst[ic + DAC_CHANNELS * ival] = (sample * 32766) + 0.5f + frand_minus_frand();
 
             /* rotate complex sinusoid at the desired frequency */
