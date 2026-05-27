@@ -108,7 +108,7 @@ int main() {
     irq_set_enabled(DMA_IRQ_3, false);
     dma_channel_start(idma);
 
-    const float sample_rate = 48e6f * 256.0f / (sys_cycle_256ths_per_pio_clock * PIO_CLOCK_PER_BIT * BIT_PER_SAMPLE * DAC_CHANNELS);
+    const float sample_rate = clock_get_hz(clk_sys) * 256.0f / (sys_cycle_256ths_per_pio_clock * PIO_CLOCK_PER_BIT * BIT_PER_SAMPLE * DAC_CHANNELS);
 
     /* this can be any value between dc and fs/2, does not need to be an integer */
     const float tone_frequency = 900.0f;
